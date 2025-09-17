@@ -81,8 +81,7 @@ It connects **LoanVantage (Jack Henry)**, **Stratyfy (bias-detection & explainab
 }
 Stratyfy output
 
-json
-Copy code
+
 {
   "decision": "CONDITIONAL_APPROVE",
   "explanations": ["DTI slightly high", "Stable balances mitigate risk"],
