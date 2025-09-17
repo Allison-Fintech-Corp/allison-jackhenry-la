@@ -9,7 +9,7 @@ It connects **LoanVantage (Jack Henry)**, **Stratyfy (bias-detection & explainab
 ## Business Context
 
 **The Problem**
-- Banks rely on **LoanVantage** for loan origination and credit decisioning.  
+- Banks rely on **[LoanAdvantage](https://jackhenry.dev/jxchange-rest/providers/loanvantage/)** for loan origination and credit decisioning.  
 - **Stratyfy** provides advanced bias-detection algorithms and explainable ML models.  
 - Today, Stratyfy struggles to integrate into LoanVantage due to limited API hook points.  
 - Regulators demand **auditable, bias-aware decisions** in lending workflows.  
