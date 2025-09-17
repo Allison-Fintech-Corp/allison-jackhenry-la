@@ -57,13 +57,13 @@ It connects **LoanVantage (Jack Henry)**, **Stratyfy (bias-detection & explainab
 
 ## Core Intents (Tools)
 
-| Intent                   | Description                                      | Backend Adapter            |
-|--------------------------|--------------------------------------------------|----------------------------|
-| `lv_application_inquire` | Fetch a loan application from LoanVantage         | LoanVantage REST (ApplicationInquire) |
-| `cd_customer_context`    | Enrich app with Core Director customer/account data | jXchange SOAP (AcctInq, CustInq, AcctHistSrch) |
-| `stratyfy_assess`        | Run Stratyfy bias-detection + explainable decision | Stratyfy REST API |
-| `lv_document_create`     | Write decision + bias evidence back into LoanVantage | LoanVantage REST (DocumentCreate) |
-| `audit_record`           | Persist an immutable evidence pack in Allison ledger | Postgres + object store |
+| Intent                   | Description                                          | Backend Adapter                                     |
+|--------------------------|------------------------------------------------------|-----------------------------------------------------|
+| `lv_application_inquire` | Fetch a loan application from LoanVantage            | LoanVantage REST (ApplicationInquire)               |
+| `cd_customer_context`    | Enrich app with Core Director customer/account data  | jXchange SOAP (AcctInq, CustInq, AcctHistSrch)      |
+| `stratyfy_assess`        | Run Stratyfy bias-detection + explainable decision   | Stratyfy REST API                                   |
+| `lv_document_create`     | Write decision + bias evidence back to LoanVantage   | LoanVantage REST (DocumentCreate)                   |
+| `audit_record`           | Persist an immutable evidence pack in Allison ledger | Postgres + object store                             |
 
 ---
 
@@ -73,86 +73,80 @@ It connects **LoanVantage (Jack Henry)**, **Stratyfy (bias-detection & explainab
 ```json
 {
   "app_id": "LV-12345",
-  "customer": {"id": "CUST-555", "dob": "1987-04-02"},
-  "loan": {"product":"Auto", "amount": 25000, "term_months": 36},
-  "credit": {"bureau_score": 688, "nsf_12m": 1},
-  "account_history": {"avg_balance_90d": 2300, "dda_tenure_months": 28},
-  "application_meta": {"channel":"branch", "submitted_ts":"2025-09-16T14:36:00Z"}
+  "customer": { "id": "CUST-555", "dob": "1987-04-02" },
+  "loan": { "product": "Auto", "amount": 25000, "term_months": 36 },
+  "credit": { "bureau_score": 688, "nsf_12m": 1 },
+  "account_history": { "avg_balance_90d": 2300, "dda_tenure_months": 28 },
+  "application_meta": { "channel": "branch", "submitted_ts": "2025-09-16T14:36:00Z" }
 }
-Stratyfy output
+```
 
-
+**Stratyfy output**
+```json
 {
   "decision": "CONDITIONAL_APPROVE",
   "explanations": ["DTI slightly high", "Stable balances mitigate risk"],
   "bias_checks": {
-    "metrics": {"pp_diff": 0.06, "four_fifths_rule": "PASS"},
+    "metrics": { "pp_diff": 0.06, "four_fifths_rule": "PASS" },
     "protected_proxies": ["geo_tract", "age"]
   },
   "model_version": "stratyfy-uw-2.3.1"
 }
+```
+
+**LoanVantage write-back**
+```json
+{
+  "app_id": "LV-12345",
+  "status_proposed": "CONDITIONAL_APPROVE",
+  "conditions": [{ "type": "COSIGNER", "detail": "Score < 690" }],
+  "notes": "Bias check PASS. Evidence: EV-2025-09-16-001",
+  "evidence_ref": "audit://EV-2025-09-16-001"
+}
+```
 
 ---
 
-LoanVantage write-back
+## Demo vs. Production
 
-{
-  "app_id":"LV-12345",
-  "status_proposed":"CONDITIONAL_APPROVE",
-  "conditions":[{"type":"COSIGNER","detail":"Score < 690"}],
-  "notes":"Bias check PASS. Evidence: EV-2025-09-16-001",
-  "evidence_ref":"audit://EV-2025-09-16-001"
-}
+**Demo Mode**
+- Mock adapters (fixtures) simulate LoanVantage, Core Director, and Stratyfy responses.  
+- AgentScope flows are real, showing end-to-end orchestration.  
+- UI demonstrates proactive “one loan stands out” → Stratyfy assess → decision written back.  
 
-Demo vs. Production
+**Production Mode**
+- Adapters call real APIs: OAuth2/OIDC with LoanVantage, SOAP with Core Director, REST with Stratyfy.  
+- Correlation IDs (X-Request-ID, X-Correlation-ID) are preserved across systems.  
+- Same intents, same orchestration, just with live integrations.  
 
-Demo Mode
+---
 
-Mock adapters (fixtures) simulate LoanVantage, Core Director, and Stratyfy responses.
+## Roadmap
 
-AgentScope flows are real, showing end-to-end orchestration.
+**MVP / Demo**
+- Implement core intents with mock adapters.  
+- Show bias-aware loan decision end-to-end.  
 
-UI demonstrates proactive “one loan stands out” → Stratyfy assess → decision written back.
+**Pilot**
+- Connect with a bank’s LoanVantage + Core Director.  
+- Use Stratyfy’s sandbox/prod API.  
 
-Production Mode
+**Scale**
+- Add real-time triggers via Enterprise Event System (EES).  
+- Expand to CRA, fair lending, and other compliance modules.  
+- Open examiner portal for evidence packs.  
 
-Adapters call real APIs: OAuth2/OIDC with LoanVantage, SOAP with Core Director, REST with Stratyfy.
+---
 
-Correlation IDs (X-Request-ID, X-Correlation-ID) are preserved across systems.
+## Strategic Positioning
 
-Same intents, same orchestration, just with live integrations.
+Allison is not just another bias tool—it’s the operating fabric for fair, explainable, auditable decisions.  
 
-Roadmap
+- Banks stay in LoanVantage.  
+- Stratyfy rides seamlessly into bank workflows.  
+- Jack Henry benefits from a stronger ecosystem.  
 
-MVP / Demo
+---
 
-Implement core intents with mock adapters.
-
-Show bias-aware loan decision end-to-end.
-
-Pilot
-
-Connect with a bank’s LoanVantage + Core Director.
-
-Use Stratyfy’s sandbox/prod API.
-
-Scale
-
-Add real-time triggers via Enterprise Event System (EES).
-
-Expand to CRA, fair lending, and other compliance modules.
-
-Open examiner portal for evidence packs.
-
-Strategic Positioning
-
-Allison is not just another bias tool—it’s the operating fabric for fair, explainable, auditable decisions.
-
-Banks stay in LoanVantage.
-
-Stratyfy rides seamlessly into bank workflows.
-
-Jack Henry benefits from a stronger ecosystem.
-
-⚡ One Liner:
+⚡ **One Liner**:  
 With AgentScope as its backbone, Allison is the decision air-traffic controller—bridging LoanVantage, Stratyfy, and the bank core to deliver bias-aware, regulator-ready lending workflows.
